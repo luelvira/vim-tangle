@@ -1,6 +1,7 @@
 " Starts a section for python3 code.
 python3 << EOF
 import vim
+import subprocess
 
 def read_file():
     """Reads the current buffer and returns a list of lines."""
@@ -31,7 +32,7 @@ def get_code_blocks(lines):
         if line.startswith('```'):
             if not start:
                 start = True
-                current_type = line.replace('```', '')
+                current_type = line.replace('```', '').strip()
                 if not current_type in code_blocks:
                     code_blocks[current_type] = []
             else:
@@ -87,8 +88,42 @@ def tangleAdd(filename):
                     lines[i] = 'tangle: ' + filename
                     continue
     vim.current.buffer[:] = lines
+
+def tangleBlock():
+    """Tangle the current block."""
+    # move to the start of the block
+    vim.command('normal! ?```?e<CR>')
+    # get the type of the block
+    startline = vim.current.window.cursor[0] + 1
+    block_type = vim.eval('getline(".")').replace('```', '').strip()
+    # move to the end of the block
+    vim.command('normal! /```/e<CR>')
+    endline = vim.current.window.cursor[0] - 1
+    # get the code
+    code = vim.eval('getline({}, {})'.format(startline, endline))
+    if not code:
+        return
+    if block_type == "bash" or block_type == "sh" or block_type == "shell":
+        block_type = "bash"
+    elif block_type == "js" or block_type.lower() == "javascript":
+        block_type = "node"
+    elif block_type == "py" or block_type.lower() == "python":
+        block_type = "python3"
+    # TODO: add more languages
+    # execute the code
+    out = subprocess.run([block_type, '-c', code])
+    if out.returncode != 0:
+        print("Error executing code block.")
+    else:
+        print("Code block executed successfully.")
+
+
+
 EOF
 
+function! tangle#tangleBlock()
+    python3 tangleBlock()
+endfunction
 
 function! tangle#Tangle()
     python3 tangle()

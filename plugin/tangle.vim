@@ -16,3 +16,4 @@ let g:loaded_tangle = 1
 command! -nargs=0 Tangle call tangle#Tangle()
 command! -nargs=1 TangleAdd call tangle#TangleAdd(<f-args>)
 command! -nargs=0 TangleRemove call tangle#TangleRemove()
+command! -nargs=0 TangleBlock call tangle#TangleBlock()
